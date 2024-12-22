@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Auth with Firebase</title>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-analytics.js";
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            
+            apiKey: "AIzaSyABKOcBkCikCDffUNi1w3Of4nwZ6HVYjaM",
+            authDomain: "ajay-1c968.firebaseapp.com",
+            projectId: "ajay-1c968",
+            storageBucket: "ajay-1c968.appspot.com",
+            messagingSenderId: "395977621256",
+            appId: "1:395977621256:web:f780ebad7eec4e86ba76bd",
+            measurementId: "G-8QLE8JMHDR"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+
+        let recaptchaVerifier;
+
+        window.onload = () => {
+            // Initialize reCAPTCHA
+            recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                'size': 'normal',
+                'callback': (response) => {
+                    // reCAPTCHA solved, allow signInWithPhoneNumber.
+                    sendOTP();
+                },
+                'expired-callback': () => {
+                    // Response expired. Ask user to solve reCAPTCHA again.
+                    alert('reCAPTCHA expired, please try again.');
+                }
+            }, auth);
+
+            // Render reCAPTCHA and handle any errors
+            recaptchaVerifier.render()
+                .then(function(widgetId) {
+                    window.recaptchaWidgetId = widgetId;
+                })
+                .catch(function(error) {
+                    console.error('Error rendering reCAPTCHA', error);
+                    alert('Error rendering reCAPTCHA. Please try again later.');
+                });
+        };
+
+        // Function to send OTP
+        window.sendOTP = () => {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const appVerifier = recaptchaVerifier;
+
+            signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+                .then((confirmationResult) => {
+                    window.confirmationResult = confirmationResult;
+                    alert('OTP sent!');
+                })
+                .catch((error) => {
+                    console.error('Error during signInWithPhoneNumber', error);
+                    alert(error.message);  // Display the error message
+                });
+        };
+    </script>
+</head>
+<body>
+    <input type="text" id="phoneNumber" placeholder="Enter phone number">
+    <button onclick="sendOTP()">Send OTP</button>
+    <div id="recaptcha-container"></div>
+</body>
+</html>
